@@ -3,6 +3,7 @@
 
 #include <string>
 #include <variant>
+#include <vector>
 
 using Number = float;
 using Symbol = std::string;
@@ -10,11 +11,38 @@ using Symbol = std::string;
 struct Null {
 };
 
-struct Lambda {
 
+struct Expression {
+    using List = std::vector<Expression>;
+    std::variant<Number, Symbol, List> value;
+
+    Expression() {}
+
+    Expression(Number n) : value(n) {}
+
+    Expression(Symbol s) : value(std::move(s)) {}
+
+    Expression(List l) : value(std::move(l)) {}
+
+    Number get_number() {
+        return std::get<Number>(value);
+    }
+
+    Symbol get_symbol() {
+        return std::get<Symbol>(value);
+    }
+
+    List get_list() {
+        return std::get<List>(value);
+    }
 };
 
-using Result = std::variant<Null, Number, Lambda>;
+struct Lambda {
+    std::vector<Symbol> arguments;
+    Expression body;
+};
+
+using Result = std::variant<Null, Number, Symbol, Lambda, bool>;
 
 Result eval_program(std::string program);
 

@@ -46,7 +46,23 @@ void test5() {
     std::cout << "Test 5:\n";
     std::string program = "((lambda (x) (+ x 1)) 1)";
     auto n = std::get<float>(eval_program(program));
-    assert(n == 3);
+    assert(n == 2);
+    std::cout << "Ok\n\n";
+}
+
+void test6() {
+    std::cout << "Test 6:\n";
+    std::string program = "(if (= 1 1) 1 2)";
+    auto n = std::get<float>(eval_program(program));
+    assert(n == 1);
+    std::cout << "Ok\n\n";
+}
+
+void test7() {
+    std::cout << "Test 7:\n";
+    std::string program = "(if (= 1 2) 1 2)";
+    auto n = std::get<float>(eval_program(program));
+    assert(n == 2);
     std::cout << "Ok\n\n";
 }
 
@@ -57,6 +73,8 @@ int main() {
     test3();
     test4();
     test5();
+    test6();
+    test7();
 
     return 1;
 }

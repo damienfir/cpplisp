@@ -5,13 +5,9 @@
 #include <tuple>
 #include <memory>
 #include <unordered_map>
+#include <set>
 
 #include "lisp.h"
-
-template<typename T>
-void print(const std::vector<T> &v) {
-    for (const auto &s : v) std::cout << s << std::endl;
-}
 
 using Tokens = std::vector<std::string>;
 
@@ -36,32 +32,6 @@ Tokens tokenize(std::string program) {
     }
     return tokens;
 }
-
-
-struct Expression {
-    using List = std::vector<Expression>;
-    std::variant<Number, Symbol, List> value;
-
-    Expression() {}
-
-    Expression(Number n) : value(n) {}
-
-    Expression(Symbol s) : value(std::move(s)) {}
-
-    Expression(List l) : value(std::move(l)) {}
-
-    Number get_number() {
-        return std::get<Number>(value);
-    }
-
-    Symbol get_symbol() {
-        return std::get<Symbol>(value);
-    }
-
-    List get_list() {
-        return std::get<List>(value);
-    }
-};
 
 void print_n_spaces(int n) {
     for (int i = 0; i < n * 2; ++i) {
@@ -144,6 +114,14 @@ float multiply_fn(const std::vector<Result> &arguments) {
     return n;
 }
 
+bool equals_fn(const std::vector<Result> &arguments) {
+    if (arguments.size() != 2) {
+        throw std::runtime_error("'=' operator requires exactly 2 arguments");
+    }
+
+    return std::get<float>(arguments[0]) == std::get<float>(arguments[1]);
+}
+
 Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     if (op == "+") {
         return plus_fn(arguments);
@@ -153,21 +131,25 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
         return divide_fn(arguments);
     } else if (op == "*") {
         return multiply_fn(arguments);
+    } else if (op == "=") {
+        return equals_fn(arguments);
     } else {
         throw std::runtime_error("Unknown operation: " + op);
     }
 }
 
-using Env = std::unordered_map<std::string, Number>;
+using Env = std::unordered_map<std::string, Result>;
 
-Env make_env(Expression::List vars) {
-    Env env;
+std::pair<Result, Env> eval(Expression expr, Env env);
+
+Env make_env(Expression::List vars, Env env) {
+    Env new_env;
     for (int i = 0; i < vars.size(); i += 2) {
-        auto key = std::get<Symbol>(vars[i].value);
-        auto val = std::get<Number>(vars[i + 1].value);
-        env[key] = val;
+        auto key = vars[i].get_symbol();
+        auto val = eval(vars[i + 1], env).first;
+        new_env[key] = val;
     }
-    return env;
+    return new_env;
 }
 
 Env merge(Env a, Env b) {
@@ -176,22 +158,82 @@ Env merge(Env a, Env b) {
     return a;
 }
 
-//Result eval(Expression expr, const Env &env);
+std::string to_string(Result res) {
+    if (auto n = std::get_if<Number>(&res)) {
+        return std::to_string(*n);
+    } else if (std::get_if<Null>(&res)) {
+        return "null";
+    }
+}
 
-//std::vector<Result> eval_all(Expression::List exprs, const Env &env) {
-//    std::vector<Result> arguments;
-//    for (auto e : exprs) {
-//        arguments.push_back(eval(e, env));
-//    }
-//    return arguments;
-//}
+std::set<std::string> builtins = {
+        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "if", "="
+};
+
+std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
+    if (op == "let") {
+        auto new_env = make_env(list[1].get_list(), env);
+        return {eval(list[2], merge(env, new_env)).first, env};
+
+    } else if (op == "println") {
+        auto res = eval(list[1], env).first;
+        std::cout << to_string(res) << std::endl;
+        return {0.f, env};
+
+    } else if (op == "do") {
+        auto new_env = env;
+        for (int i = 1; i < list.size() - 1; ++i) {
+            new_env = eval(list[i], new_env).second;
+        }
+
+        // Do not return new environment
+        return {eval(list[list.size() - 1], new_env).first, env};
+
+    } else if (op == "define") {
+        auto key = std::get<Symbol>(list[1].value);
+        auto val = eval(list[2], env).first;
+        env[key] = val;
+        // return modified environment
+        return {0.f, env};
+
+    } else if (op == "lambda") {
+        auto arguments = list[1].get_list();
+        std::vector<Symbol> args;
+        args.reserve(arguments.size());
+        for (auto arg : arguments) {
+            args.push_back(arg.get_symbol());
+        }
+
+        return {Lambda{args, list[2]}, env};
+
+    } else if (op == "if") {
+        if (list.size() != 4) {
+            throw std::runtime_error("Wrong syntax for 'if'");
+        }
+        auto res = eval(list[1], env).first;
+        if (std::get<bool>(res)) {
+            return {eval(list[2], env).first, env};
+        } else {
+            return {eval(list[3], env).first, env};
+        }
+
+    } else {
+        std::vector<Result> arguments;
+        for (int i = 1; i < list.size(); ++i) {
+            arguments.push_back(eval(list[i], env).first);
+        }
+        return {apply_op(op, arguments), env};
+    }
+}
 
 std::pair<Result, Env> eval(Expression expr, Env env) {
     if (auto n = std::get_if<Number>(&expr.value)) {
         return {*n, env};
 
     } else if (auto s = std::get_if<Symbol>(&expr.value)) {
-        if (env.contains(*s)) {
+        if (builtins.contains(*s)) {
+            return {*s, env};
+        } else if (env.contains(*s)) {
             return {env.at(*s), env};
         } else {
             throw std::runtime_error("Undeclared symbol " + *s);
@@ -199,43 +241,18 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
 
     } else if (auto l = std::get_if<Expression::List>(&expr.value)) {
         auto list = *l;
-        auto op = list[0].get_symbol();
+        auto first = eval(list[0], env).first;
 
-        if (op == "let") {
-            auto new_env = make_env(list[1].get_list());
-            return {eval(list[2], merge(env, new_env)).first, env};
+        if (auto op = std::get_if<Symbol>(&first)) {
+            return eval_builtin(*op, list, env);
 
-        } else if (op == "println") {
-            auto res = eval(list[1], env).first;
-            std::cout << std::get<float>(res) << std::endl;
-            return {0.f, env};
-
-        } else if (op == "do") {
-            auto new_env = env;
-            for (int i = 1; i < list.size() - 1; ++i) {
-                new_env = eval(list[i], new_env).second;
-            }
-
-            // Do not return new environment
-            return {eval(list[list.size() - 1], new_env).first, env};
-
-        } else if (op == "define") {
-            auto key = std::get<Symbol>(list[1].value);
-            auto val = std::get<Number>(eval(list[2], env).first);
-            env[key] = val;
-
-            // return modified environment
-            return {0.f, env};
-        } else if (op == "lambda") {
-            return {0.f, env};
-
-        } else {
-
-            std::vector<Result> arguments;
+        } else if (auto lambda = std::get_if<Lambda>(&first)) {
+            Env bindings = env;
             for (int i = 1; i < list.size(); ++i) {
-                arguments.push_back(eval(list[i], env).first);
+                bindings[lambda->arguments[i - 1]] = eval(list[i], env).first;
             }
-            return {apply_op(op, arguments), env};
+
+            return {eval(lambda->body, bindings).first, env};
         }
     }
 }
