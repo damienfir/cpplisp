@@ -47,11 +47,11 @@ int main() {
     });
 
     test("nested arithmetic", "(+ (- 0 1 2) (+ 1 9 10))", [](auto res) {
-        assert(std::get<float>(res) == 17);
+        assert(std::get<Number>(res) == 17);
     });
 
     test("let", "(let (x 1 y 2) (+ x (* 1 y)))", [](auto res) {
-        assert(std::get<float>(res) == 3);
+        assert(std::get<Number>(res) == 3);
     });
 
     test("println", "(println 1)", [](auto res) {
@@ -63,19 +63,19 @@ int main() {
     });
 
     test("define", "(do (define x 1) (define y 2) (+ x y))", [](auto n) {
-        assert(std::get<float>(n) == 3);
+        assert(std::get<Number>(n) == 3);
     });
 
     test("lambda", "((lambda (x) (+ x 1)) 1)", [](auto n) {
-        assert(std::get<float>(n) == 2);
+        assert(std::get<Number>(n) == 2);
     });
 
     test("if", "(if (= 1 1) 1 2)", [](auto n) {
-        assert(std::get<float>(n) == 1);
+        assert(std::get<Number>(n) == 1);
     });
 
     test("if 2", "(if (= 1 2) 1 2)", [](auto n) {
-        assert(std::get<float>(n) == 2);
+        assert(std::get<Number>(n) == 2);
     });
 
     test("equals", "(do (println 1) (println (= 1 1)) (println (= 1 2)))", [](auto res) {
@@ -84,19 +84,19 @@ int main() {
 
     test("list", "(list 1 2 3)", [](auto res) {
         auto l = std::get<List>(res).list;
-        assert(std::get<float>(l[0]) == 1);
-        assert(std::get<float>(l[1]) == 2);
-        assert(std::get<float>(l[2]) == 3);
+        assert(std::get<Number>(l[0]) == 1);
+        assert(std::get<Number>(l[1]) == 2);
+        assert(std::get<Number>(l[2]) == 3);
     });
 
     test("list first", "(first (list 1 2 3))", [](auto res) {
-        assert(std::get<float>(res) == 1);
+        assert(std::get<Number>(res) == 1);
     });
 
     test("list rest", "(rest (list 1 2 3))", [](auto res) {
         auto l = std::get<List>(res).list;
-        assert(std::get<float>(l[0]) == 2);
-        assert(std::get<float>(l[1]) == 3);
+        assert(std::get<Number>(l[0]) == 2);
+        assert(std::get<Number>(l[1]) == 3);
     });
 
     test("recursion", "(do"
@@ -107,6 +107,15 @@ int main() {
                       "1"
                       "(+ x (fn (- x 1)))))))"
                       "(fn 10))", [](auto res) {
-        assert(std::get<float>(res) == 55);
+        assert(std::get<Number>(res) == 55);
+    });
+
+    test("factorial", "(do "
+                      "(define factorial (lambda (n) "
+                        "(if (= n 0)"
+                            "1 "
+                            "(* n (factorial (- n 1))))))"
+                    "(factorial 100))", [](auto res) {
+//        assert(std::get<Number>(res) == 3628800);
     });
 }

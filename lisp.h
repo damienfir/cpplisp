@@ -12,7 +12,7 @@ Tokens tokenize(std::string program);
 
 
 
-using Number = float;
+using Number = double;
 using Symbol = std::string;
 
 struct Nil {

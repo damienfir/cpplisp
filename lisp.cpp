@@ -90,34 +90,34 @@ std::tuple<Expression, int> parse(Tokens tokens, int start) {
 }
 
 
-float plus_fn(const std::vector<Result> &arguments) {
-    float n = 0;
+Number plus_fn(const std::vector<Result> &arguments) {
+    Number n = 0;
     for (auto a : arguments) {
-        n += std::get<float>(a);
+        n += std::get<Number>(a);
     }
     return n;
 }
 
-float minus_fn(const std::vector<Result> &arguments) {
-    float n = std::get<float>(arguments[0]);
+Number minus_fn(const std::vector<Result> &arguments) {
+    Number n = std::get<Number>(arguments[0]);
     for (int i = 1; i < arguments.size(); ++i) {
-        n -= std::get<float>(arguments[i]);
+        n -= std::get<Number>(arguments[i]);
     }
     return n;
 }
 
-float divide_fn(const std::vector<Result> &arguments) {
-    float n = std::get<float>(arguments[0]);
+Number divide_fn(const std::vector<Result> &arguments) {
+    Number n = std::get<Number>(arguments[0]);
     for (int i = 1; i < arguments.size(); ++i) {
-        n /= std::get<float>(arguments[i]);
+        n /= std::get<Number>(arguments[i]);
     }
     return n;
 }
 
-float multiply_fn(const std::vector<Result> &arguments) {
-    float n = std::get<float>(arguments[0]);
+Number multiply_fn(const std::vector<Result> &arguments) {
+    Number n = std::get<Number>(arguments[0]);
     for (int i = 1; i < arguments.size(); ++i) {
-        n *= std::get<float>(arguments[i]);
+        n *= std::get<Number>(arguments[i]);
     }
     return n;
 }
@@ -127,7 +127,7 @@ bool equals_fn(const std::vector<Result> &arguments) {
         throw std::runtime_error("'=' operator requires exactly 2 arguments");
     }
 
-    return std::get<float>(arguments[0]) == std::get<float>(arguments[1]);
+    return std::get<Number>(arguments[0]) == std::get<Number>(arguments[1]);
 }
 
 Result apply_op(const std::string &op, const std::vector<Result> &arguments) {

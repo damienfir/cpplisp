@@ -25,6 +25,7 @@ int main() {
             std::cout << to_string(res) << std::endl;
             program = "";
         } catch (IncompleteStatement &) {
+            // multiline expression
         } catch (std::runtime_error &e) {
             std::cout << e.what() << std::endl;
         }
