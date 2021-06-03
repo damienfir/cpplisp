@@ -65,17 +65,20 @@ std::tuple<Expression, int> parse(Tokens tokens, int start) {
         if (tokens[i] == "(") {
             i++;
             if (i >= tokens.size()) {
-                throw std::runtime_error("Expected expression after '('");
+                throw IncompleteStatement("Expected expression after '('");
             }
 
             std::vector<Expression> exprs;
             while (tokens[i] != ")") {
                 if (i == tokens.size()) {
-                    throw std::runtime_error("Expected ')'");
+                    throw IncompleteStatement("Expected ')'");
                 }
                 Expression expr;
                 std::tie(expr, i) = parse(tokens, i);
                 exprs.push_back(expr);
+                if (i >= tokens.size()) {
+                    throw IncompleteStatement("Expected ')'");
+                }
             }
             return {exprs, i + 1};
         } else if (tokens[i] == ")") {

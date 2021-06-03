@@ -18,6 +18,11 @@ using Symbol = std::string;
 struct Nil {
 };
 
+class IncompleteStatement : public std::runtime_error {
+public:
+    explicit IncompleteStatement(std::string msg) : std::runtime_error(msg.c_str()) {}
+};
+
 
 struct Expression {
     using List = std::vector<Expression>;
