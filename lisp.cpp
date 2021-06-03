@@ -168,11 +168,19 @@ std::string to_string(Result res) {
         return *s;
     } else if (auto b = std::get_if<bool>(&res)) {
         return (*b) ? "true" : "false";
+    } else if (auto l = std::get_if<List>(&res)) {
+        auto list = *l;
+        std::string s = "(";
+        for (const auto& v : list.list) {
+            s += to_string(v) + " ";
+        }
+        s += ")";
+        return s;
     }
 }
 
 std::set<std::string> builtins = {
-        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "if", "="
+        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "if", "=", "list", "first", "rest"
 };
 
 std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
@@ -222,6 +230,13 @@ std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
             return {eval(list[3], env).first, env};
         }
 
+    } else if (op == "list") {
+        List res;
+        for (int i = 1; i < list.size(); ++i) {
+            res.list.push_back(eval(list[i], env).first);
+        }
+        return {res, env};
+
     } else {
         std::vector<Result> arguments;
         for (int i = 1; i < list.size(); ++i) {
@@ -269,3 +284,12 @@ Result eval_program(std::string program) {
     return eval(ast, Env{}).first;
 }
 
+/*
+ * lists
+ * strings
+ * recursion
+ * comments
+ * standard library
+ * abstract common constructs like 'if' that can be implemented with 'cond'
+ * repl
+ */

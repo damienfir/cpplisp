@@ -83,6 +83,15 @@ void test8() {
     std::cout << "\n";
 }
 
+void test9() {
+    std::cout << "Test 9:\n";
+    std::string program = "(println (list 1 2 3))";
+    auto res = eval_program(program);
+    std::cout << to_string(res) << std::endl;
+    assert(std::holds_alternative<Nil>(res));
+    std::cout << "\n";
+}
+
 int main() {
     test0();
     test1();
@@ -93,6 +102,7 @@ int main() {
     test6();
     test7();
     test8();
+    test9();
 
     return 1;
 }

@@ -42,7 +42,11 @@ struct Lambda {
     Expression body;
 };
 
-using Result = std::variant<Nil, Number, Symbol, Lambda, bool>;
+struct List;
+using Result = std::variant<Nil, Number, Symbol, Lambda, bool, List>;
+struct List {
+    std::vector<Result> list;
+};
 
 std::string to_string(Result res);
 
