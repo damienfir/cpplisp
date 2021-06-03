@@ -68,6 +68,9 @@ std::tuple<Expression, int> parse(Tokens tokens, int start = 0) {
             i++;
             std::vector<Expression> exprs;
             while (tokens[i] != ")") {
+                if (i == tokens.size()) {
+                    throw std::runtime_error("Expected ')'");
+                }
                 Expression expr;
                 std::tie(expr, i) = parse(tokens, i);
                 exprs.push_back(expr);
@@ -171,9 +174,10 @@ std::string to_string(Result res) {
     } else if (auto l = std::get_if<List>(&res)) {
         auto list = *l;
         std::string s = "(";
-        for (const auto& v : list.list) {
+        for (const auto &v : list.list) {
             s += to_string(v) + " ";
         }
+        s.pop_back();
         s += ")";
         return s;
     }
@@ -237,6 +241,23 @@ std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
         }
         return {res, env};
 
+    } else if (op == "first") {
+        auto runtime_list = eval(list[1], env).first;
+        auto first = std::get<List>(runtime_list).list[0];
+        return {first, env};
+
+    } else if (op == "rest") {
+        auto res = eval(list[1], env).first;
+        auto all_list = std::get<List>(res);
+
+        if (all_list.list.size() < 2) {
+            return {Nil{}, env};
+        }
+
+        List rest;
+        for (int i = 1; i < all_list.list.size(); ++i) rest.list.push_back(all_list.list[i]);
+        return {rest, env};
+
     } else {
         std::vector<Result> arguments;
         for (int i = 1; i < list.size(); ++i) {
@@ -285,7 +306,6 @@ Result eval_program(std::string program) {
 }
 
 /*
- * lists
  * strings
  * recursion
  * comments
