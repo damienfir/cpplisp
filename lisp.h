@@ -8,7 +8,7 @@
 using Number = float;
 using Symbol = std::string;
 
-struct Null {
+struct Nil {
 };
 
 
@@ -42,7 +42,9 @@ struct Lambda {
     Expression body;
 };
 
-using Result = std::variant<Null, Number, Symbol, Lambda, bool>;
+using Result = std::variant<Nil, Number, Symbol, Lambda, bool>;
+
+std::string to_string(Result res);
 
 Result eval_program(std::string program);
 

@@ -158,11 +158,16 @@ Env merge(Env a, Env b) {
     return a;
 }
 
+
 std::string to_string(Result res) {
     if (auto n = std::get_if<Number>(&res)) {
         return std::to_string(*n);
-    } else if (std::get_if<Null>(&res)) {
-        return "null";
+    } else if (std::get_if<Nil>(&res)) {
+        return "nil";
+    } else if (auto s = std::get_if<Symbol>(&res)) {
+        return *s;
+    } else if (auto b = std::get_if<bool>(&res)) {
+        return (*b) ? "true" : "false";
     }
 }
 
@@ -178,7 +183,7 @@ std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
     } else if (op == "println") {
         auto res = eval(list[1], env).first;
         std::cout << to_string(res) << std::endl;
-        return {0.f, env};
+        return {Nil{}, env};
 
     } else if (op == "do") {
         auto new_env = env;
@@ -194,7 +199,7 @@ std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
         auto val = eval(list[2], env).first;
         env[key] = val;
         // return modified environment
-        return {0.f, env};
+        return {Nil{}, env};
 
     } else if (op == "lambda") {
         auto arguments = list[1].get_list();
@@ -253,6 +258,8 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
             }
 
             return {eval(lambda->body, bindings).first, env};
+        } else {
+            throw std::runtime_error("Unknown operator: " + to_string(first));
         }
     }
 }
