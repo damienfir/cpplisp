@@ -27,7 +27,7 @@ void test_tokenize() {
 
 void test_parse() {
     auto tokens = tokenize("1");
-    auto [ast, _] = parse(tokens);
+    auto[ast, _] = parse(tokens);
     assert(ast.get_number() == 1);
 }
 
@@ -35,6 +35,16 @@ int main() {
     test_tokenize();
 
     test_parse();
+
+    try {
+        test("only '('", "(", [](auto res) {});
+    } catch (std::runtime_error &e) {
+        std::cout << e.what() << "\n\n";
+    }
+
+    test("only '()'", "()", [](auto res) {
+        assert(std::holds_alternative<Nil>(res));
+    });
 
     test("nested arithmetic", "(+ (- 0 1 2) (+ 1 9 10))", [](auto res) {
         assert(std::get<float>(res) == 17);

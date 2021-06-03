@@ -10,7 +10,7 @@ Tokens tokenize(std::string program) {
     Tokens tokens;
     std::string tmp;
     for (auto c : program) {
-        if (c == ' ') {
+        if (c == ' ' || c == '\n') {
             if (!tmp.empty()) {
                 tokens.push_back(tmp);
                 tmp = "";
@@ -64,6 +64,10 @@ std::tuple<Expression, int> parse(Tokens tokens, int start) {
     while (i <= tokens.size()) {
         if (tokens[i] == "(") {
             i++;
+            if (i >= tokens.size()) {
+                throw std::runtime_error("Expected expression after '('");
+            }
+
             std::vector<Expression> exprs;
             while (tokens[i] != ")") {
                 if (i == tokens.size()) {
@@ -176,6 +180,8 @@ std::string to_string(Result res) {
         s.pop_back();
         s += ")";
         return s;
+    } else if (auto lbd = std::get_if<Lambda>(&res)) {
+        return "lambda";
     }
 }
 
@@ -278,6 +284,10 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
 
     } else if (auto l = std::get_if<Expression::List>(&expr.value)) {
         auto list = *l;
+        if (list.empty()) {
+            return {Nil{}, env};
+        }
+
         auto first = eval(list[0], env).first;
 
         if (auto op = std::get_if<Symbol>(&first)) {
