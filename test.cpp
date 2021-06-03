@@ -12,7 +12,30 @@ void test(std::string name, std::string program, Fn assert_fn) {
     std::cout << "\n";
 }
 
+template<typename T>
+bool equals(const std::vector<T> &a, const std::vector<T> &b) {
+    return (a.size() == b.size()) && std::equal(std::begin(a), std::end(a), std::begin(b));
+}
+
+void test_tokenize() {
+    auto tokens = tokenize("(+ 1 2)");
+    assert(equals(tokens, std::vector<std::string>({"(", "+", "1", "2", ")"})));
+
+    tokens = tokenize("1");
+    assert(tokens[0] == "1");
+}
+
+void test_parse() {
+    auto tokens = tokenize("1");
+    auto [ast, _] = parse(tokens);
+    assert(ast.get_number() == 1);
+}
+
 int main() {
+    test_tokenize();
+
+    test_parse();
+
     test("nested arithmetic", "(+ (- 0 1 2) (+ 1 9 10))", [](auto res) {
         assert(std::get<float>(res) == 17);
     });
@@ -68,14 +91,12 @@ int main() {
 
     test("recursion", "(do"
                       "(define fn (lambda (x)"
-                          "(do"
-                             "(println x)"
-                            "(if (= x 1)"
-                                "1"
-                                "(+ x (fn (- x 1)))))))"
+                      "(do"
+                      "(println x)"
+                      "(if (= x 1)"
+                      "1"
+                      "(+ x (fn (- x 1)))))))"
                       "(fn 10))", [](auto res) {
-       assert(std::get<float>(res) == 55);
+        assert(std::get<float>(res) == 55);
     });
-
-    return 1;
 }

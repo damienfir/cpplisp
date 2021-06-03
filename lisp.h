@@ -4,6 +4,13 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <unordered_map>
+
+using Tokens = std::vector<std::string>;
+
+Tokens tokenize(std::string program);
+
+
 
 using Number = float;
 using Symbol = std::string;
@@ -37,6 +44,9 @@ struct Expression {
     }
 };
 
+std::tuple<Expression, int> parse(Tokens tokens, int start = 0);
+
+
 struct Lambda {
     std::vector<Symbol> arguments;
     Expression body;
@@ -50,6 +60,8 @@ struct List {
 
 std::string to_string(Result res);
 
+using Env = std::unordered_map<std::string, Result>;
+std::pair<Result, Env> eval_with_env(std::string program, Env env);
 Result eval_program(std::string program);
 
 #endif //CPPLISP_LISP_H

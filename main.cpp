@@ -1,24 +1,26 @@
+#include <iostream>
 #include "lisp.h"
 
 int main() {
-//    std::string program = "(+ (- 0 1 9) (+ 2 2 3 4))";
-//    std::string program = "(let (x 1 y 2) (+ x (* 1 y)))";
-    std::string program = "(print 1)";
-//    std::string program = "(do (print 1) (print 2))";
-//    std::string program = "(do (define x 1) (+ x 1))";
+    Env env{};
 
-    auto tokens = tokenize(program);
+    while (true) {
+        std::string line;
+        std::cout << ">> ";
+        std::getline(std::cin, line);
 
-    auto[ast, _] = parse(tokens);
+        if (line == "exit") {
+            return 0;
+        }
 
-    Env env;
-    std::cout << std::get<Number>(eval(ast, env)) << std::endl;
+        Result res;
+        try {
+            std::tie(res, env) = eval_with_env(line, env);
+            std::cout << to_string(res) << std::endl;
+        } catch (std::runtime_error &e) {
+            std::cout << e.what() << std::endl;
+        }
+    }
 
     return 0;
 }
-
-/*
- * (+ 1 (+ 1 2 3))
- *
- * (let (x 1 y 2) (+ x y))
- */

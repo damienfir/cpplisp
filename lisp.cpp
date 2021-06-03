@@ -1,15 +1,10 @@
 #include <iostream>
 #include <utility>
-#include <vector>
-#include <variant>
 #include <tuple>
 #include <memory>
-#include <unordered_map>
 #include <set>
 
 #include "lisp.h"
-
-using Tokens = std::vector<std::string>;
 
 Tokens tokenize(std::string program) {
     Tokens tokens;
@@ -29,6 +24,9 @@ Tokens tokenize(std::string program) {
         } else {
             tmp += c;
         }
+    }
+    if (!tmp.empty()) {
+        tokens.push_back(tmp);
     }
     return tokens;
 }
@@ -61,7 +59,7 @@ Expression atom(std::string token) {
     }
 }
 
-std::tuple<Expression, int> parse(Tokens tokens, int start = 0) {
+std::tuple<Expression, int> parse(Tokens tokens, int start) {
     int i = start;
     while (i <= tokens.size()) {
         if (tokens[i] == "(") {
@@ -141,7 +139,6 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     }
 }
 
-using Env = std::unordered_map<std::string, Result>;
 
 std::pair<Result, Env> eval(Expression expr, Env env);
 
@@ -160,7 +157,6 @@ Env merge(Env a, Env b) {
     a.merge(b);
     return a;
 }
-
 
 std::string to_string(Result res) {
     if (auto n = std::get_if<Number>(&res)) {
@@ -300,14 +296,18 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
     }
 }
 
-Result eval_program(std::string program) {
+std::pair<Result, Env> eval_with_env(std::string program, Env env) {
     auto[ast, _] = parse(tokenize(program));
-    return eval(ast, Env{}).first;
+    return eval(ast, env);
+}
+
+
+Result eval_program(std::string program) {
+    return eval_with_env(program, Env{}).first;
 }
 
 /*
  * strings
- * recursion
  * comments
  * standard library
  * abstract common constructs like 'if' that can be implemented with 'cond'
