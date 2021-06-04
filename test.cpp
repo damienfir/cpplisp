@@ -18,17 +18,32 @@ bool equals(const std::vector<T> &a, const std::vector<T> &b) {
 }
 
 void test_tokenize() {
+    std::cout << "test tokenization\n";
+
     auto tokens = tokenize("(+ 1 2)");
     assert(equals(tokens, std::vector<std::string>({"(", "+", "1", "2", ")"})));
 
     tokens = tokenize("1");
     assert(tokens[0] == "1");
+
+    tokens = tokenize("(x 1) (y 2)");
+    assert(equals(tokens, std::vector<std::string>({"(", "x", "1", ")", "(", "y", "2", ")"})));
+
+    std::cout << "Ok\n\n";
 }
 
 void test_parse() {
+    std::cout << "test parsing\n";
+
     auto tokens = tokenize("1");
-    auto[ast, _] = parse(tokens);
+    auto ast = parse(tokens).first;
     assert(ast.get_number() == 1);
+
+    tokens = tokenize("(x 1) (y 2)");
+    auto asts = parse_all(tokens);
+    assert(asts.size() == 2);
+
+    std::cout << "Ok\n\n";
 }
 
 int main() {
@@ -102,10 +117,10 @@ int main() {
     test("recursion", "(do"
                       "(define fn (lambda (x)"
                       "(do"
-                      "(println x)"
-                      "(if (= x 1)"
-                      "1"
-                      "(+ x (fn (- x 1)))))))"
+                          "(println x)"
+                          "(if (= x 1)"
+                              "1"
+                              "(+ x (fn (- x 1)))))))"
                       "(fn 10))", [](auto res) {
         assert(std::get<Number>(res) == 55);
     });
@@ -115,7 +130,15 @@ int main() {
                         "(if (= n 0)"
                             "1 "
                             "(* n (factorial (- n 1))))))"
-                    "(factorial 100))", [](auto res) {
-//        assert(std::get<Number>(res) == 3628800);
+                    "(factorial 10))", [](auto res) {
+        assert(std::get<Number>(res) == 3628800);
+    });
+
+    test("multi-instruction", "(define x 1) (println x) (define y 2) (println y) (+ x y)", [](auto res) {
+        assert(std::get<Number>(res) == 3);
+    });
+
+    test("cond", "(cond ((= 1 2) 1) ((= 1 1) 2))", [](auto res) {
+        assert(std::get<Number>(res) == 2);
     });
 }

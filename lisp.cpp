@@ -6,6 +6,12 @@
 
 #include "lisp.h"
 
+std::string stdlib() {
+    return R"stdlib(
+)stdlib";
+}
+
+
 Tokens tokenize(std::string program) {
     Tokens tokens;
     std::string tmp;
@@ -59,7 +65,7 @@ Expression atom(std::string token) {
     }
 }
 
-std::tuple<Expression, int> parse(Tokens tokens, int start) {
+std::pair<Expression, int> parse(Tokens tokens, int start) {
     int i = start;
     while (i <= tokens.size()) {
         if (tokens[i] == "(") {
@@ -89,6 +95,16 @@ std::tuple<Expression, int> parse(Tokens tokens, int start) {
     }
 }
 
+std::vector<Expression> parse_all(Tokens tokens) {
+    std::vector<Expression> exprs;
+    int i = 0;
+    while (i < tokens.size()) {
+        Expression expr;
+        std::tie(expr, i) = parse(tokens, i);
+        exprs.push_back(expr);
+    }
+    return exprs;
+}
 
 Number plus_fn(const std::vector<Result> &arguments) {
     Number n = 0;
@@ -130,6 +146,7 @@ bool equals_fn(const std::vector<Result> &arguments) {
     return std::get<Number>(arguments[0]) == std::get<Number>(arguments[1]);
 }
 
+
 Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     if (op == "+") {
         return plus_fn(arguments);
@@ -145,7 +162,6 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
         throw std::runtime_error("Unknown operation: " + op);
     }
 }
-
 
 std::pair<Result, Env> eval(Expression expr, Env env);
 
@@ -189,7 +205,7 @@ std::string to_string(Result res) {
 }
 
 std::set<std::string> builtins = {
-        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "if", "=", "list", "first", "rest"
+        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "=", "list", "first", "rest", "cond", "if"
 };
 
 std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
@@ -238,6 +254,33 @@ std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
         } else {
             return {eval(list[3], env).first, env};
         }
+
+    } else if (op == "cond") {
+        for (int i = 1; i < list.size(); ++i) {
+            if (!list[i].is_list()) {
+                throw std::runtime_error("Expected list of condition and expression");
+            }
+
+            auto exprs = list[i].get_list();
+            if (exprs.size() < 2) {
+                throw std::runtime_error("No expression following test");
+            }
+
+            bool is_else = exprs[0].is_symbol() && exprs[0].get_symbol() == "else";
+            if (is_else) {
+                return eval(exprs[1], env);
+            }
+
+            // Keep two ifs clauses separate because otherwise it will try to evaluate "else"
+            auto test_res = eval(exprs[0], env).first;
+            auto is_true = std::holds_alternative<bool>(test_res) && std::get<bool>(test_res);
+            if (is_true) {
+                return eval(exprs[1], env);
+            }
+        }
+
+        // No clause was evaluated
+        return {Nil{}, env};
 
     } else if (op == "list") {
         List res;
@@ -309,20 +352,27 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
     }
 }
 
+std::pair<Result, Env> eval_all(std::vector<Expression> exprs, Env env) {
+    Result res;
+    for (int i = 0; i < exprs.size(); ++i) {
+        std::tie(res, env) = eval(exprs[i], env);
+    }
+    return {res, env};
+}
+
 std::pair<Result, Env> eval_with_env(std::string program, Env env) {
-    auto[ast, _] = parse(tokenize(program));
-    return eval(ast, env);
+    auto ast = parse_all(tokenize(program));
+    return eval_all(ast, env);
 }
 
 
 Result eval_program(std::string program) {
-    return eval_with_env(program, Env{}).first;
+    auto env = eval_with_env(stdlib(), Env{}).second;
+    return eval_with_env(program, env).first;
 }
 
 /*
  * strings
  * comments
  * standard library
- * abstract common constructs like 'if' that can be implemented with 'cond'
- * repl
  */

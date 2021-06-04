@@ -1,8 +1,24 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "lisp.h"
 
-int main() {
-    Env env{};
+
+int main(int argc, char **argv) {
+    if (argc > 1) {
+        // Execute a single file
+        std::ifstream file(argv[1]);
+        if (!file.is_open()) {
+            std::cerr << "Cannot open file " << argv[1] << std::endl;
+            return 1;
+        }
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        eval_program(buffer.str());
+        return 0;
+    }
+
+    auto env = eval_with_env(stdlib(), Env{}).second;
 
     std::string program;
     while (true) {

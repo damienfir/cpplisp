@@ -6,10 +6,11 @@
 #include <vector>
 #include <unordered_map>
 
+std::string stdlib();
+
 using Tokens = std::vector<std::string>;
 
 Tokens tokenize(std::string program);
-
 
 
 using Number = double;
@@ -47,9 +48,23 @@ struct Expression {
     List get_list() {
         return std::get<List>(value);
     }
+
+    bool is_symbol() {
+        return std::holds_alternative<Symbol>(value);
+    }
+
+    bool is_number() {
+        return std::holds_alternative<Number>(value);
+    }
+
+    bool is_list() {
+        return std::holds_alternative<List>(value);
+    }
 };
 
-std::tuple<Expression, int> parse(Tokens tokens, int start = 0);
+std::pair<Expression, int> parse(Tokens tokens, int start = 0);
+
+std::vector<Expression> parse_all(Tokens tokens);
 
 
 struct Lambda {
@@ -66,7 +81,9 @@ struct List {
 std::string to_string(Result res);
 
 using Env = std::unordered_map<std::string, Result>;
+
 std::pair<Result, Env> eval_with_env(std::string program, Env env);
+
 Result eval_program(std::string program);
 
 #endif //CPPLISP_LISP_H
