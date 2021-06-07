@@ -14,8 +14,26 @@ std::string stdlib() {
 Tokens tokenize(const std::string &program) {
     Tokens tokens;
     std::optional<Token> tmp;
+    bool comment = false;
 
     for (auto c : program) {
+        if (c == '\n') {
+            if (comment) {
+                comment = false;
+            }
+        } else {
+            if (comment) {
+                continue;
+            }
+        }
+
+        if (c == ';') {
+            if (!tmp) {
+                comment = true;
+                continue;
+            }
+        }
+
         switch (c) {
             case ' ':
             case '\n':
@@ -68,6 +86,7 @@ Tokens tokenize(const std::string &program) {
                 } else {
                     tmp->val += c;
                 }
+
                 break;
         }
     }
@@ -436,7 +455,6 @@ Result eval_program(std::string program) {
 }
 
 /*
- * strings
  * comments
  * standard library
  */

@@ -155,4 +155,13 @@ int main() {
     test("string", "(do (define s \"hello, world!\") (println s) s)", [](auto res) {
         assert(std::get<String>(res).value == "hello, world!");
     });
+
+    test("comments", R"lisp(
+(println "print this")
+; this is a comment
+(println "print this too")
+)lisp",
+         [](auto res) {
+             assert(std::holds_alternative<Nil>(res));
+         });
 }
