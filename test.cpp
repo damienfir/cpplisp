@@ -12,6 +12,10 @@ void test(std::string name, std::string program, Fn assert_fn) {
     std::cout << "\n";
 }
 
+bool operator==(const Token &a, const Token &b) {
+    return a.type == b.type && a.val == b.val;
+}
+
 template<typename T>
 bool equals(const std::vector<T> &a, const std::vector<T> &b) {
     return (a.size() == b.size()) && std::equal(std::begin(a), std::end(a), std::begin(b));
@@ -21,13 +25,19 @@ void test_tokenize() {
     std::cout << "test tokenization\n";
 
     auto tokens = tokenize("(+ 1 2)");
-    assert(equals(tokens, std::vector<std::string>({"(", "+", "1", "2", ")"})));
+    assert(tokens[0] == Token(LEFTPAREN));
+    assert(tokens[1] == Token(SYMBOL, "+"));
+    assert(tokens[2] == Token(SYMBOL, "1"));
+    assert(tokens[3] == Token(SYMBOL, "2"));
+    assert(tokens[4] == Token(RIGHTPAREN));
 
     tokens = tokenize("1");
-    assert(tokens[0] == "1");
+    assert(tokens[0].val == "1");
 
     tokens = tokenize("(x 1) (y 2)");
-    assert(equals(tokens, std::vector<std::string>({"(", "x", "1", ")", "(", "y", "2", ")"})));
+    assert(equals(tokens,
+                  Tokens({Token(LEFTPAREN), Token(SYMBOL, "x"), Token(SYMBOL, "1"), Token(RIGHTPAREN), Token(LEFTPAREN),
+                          Token(SYMBOL, "y"), Token(SYMBOL, "2"), Token(RIGHTPAREN)})));
 
     std::cout << "Ok\n\n";
 }
@@ -117,20 +127,20 @@ int main() {
     test("recursion", "(do"
                       "(define fn (lambda (x)"
                       "(do"
-                          "(println x)"
-                          "(if (= x 1)"
-                              "1"
-                              "(+ x (fn (- x 1)))))))"
+                      "(println x)"
+                      "(if (= x 1)"
+                      "1"
+                      "(+ x (fn (- x 1)))))))"
                       "(fn 10))", [](auto res) {
         assert(std::get<Number>(res) == 55);
     });
 
     test("factorial", "(do "
                       "(define factorial (lambda (n) "
-                        "(if (= n 0)"
-                            "1 "
-                            "(* n (factorial (- n 1))))))"
-                    "(factorial 10))", [](auto res) {
+                      "(if (= n 0)"
+                      "1 "
+                      "(* n (factorial (- n 1))))))"
+                      "(factorial 10))", [](auto res) {
         assert(std::get<Number>(res) == 3628800);
     });
 
@@ -142,7 +152,7 @@ int main() {
         assert(std::get<Number>(res) == 2);
     });
 
-//    test("string", "\"hello, world!\"", [](auto res) {
-//        assert(std::get<String>(res) == "hello, world!");
-//    });
+    test("string", "(do (define s \"hello, world!\") (println s) s)", [](auto res) {
+        assert(std::get<String>(res).value == "hello, world!");
+    });
 }

@@ -11,53 +11,93 @@ std::string stdlib() {
 )stdlib";
 }
 
-
 Tokens tokenize(const std::string &program) {
     Tokens tokens;
-    std::string tmp;
+    std::optional<Token> tmp;
+
     for (auto c : program) {
-        if (c == ' ' || c == '\n') {
-            if (!tmp.empty()) {
-                tokens.push_back(tmp);
-                tmp = "";
-            }
-        } else if (c == '(' || c == ')') {
-            if (!tmp.empty()) {
-                tokens.push_back(tmp);
-                tmp = "";
-            }
-            tokens.emplace_back(1, c);
-        } else {
-            tmp += c;
+        switch (c) {
+            case ' ':
+            case '\n':
+                if (tmp && tmp->type == STRING) {
+                    tmp->val += c;
+                } else if (tmp) {
+                    tokens.push_back(*tmp);
+                    tmp = {};
+                }
+                break;
+
+            case '(':
+                if (tmp && tmp->type == STRING) {
+                    tmp->val += c;
+                } else if (tmp && tmp->type == SYMBOL) {
+                    tokens.push_back(*tmp);
+                    tmp = {};
+                    tokens.emplace_back(LEFTPAREN);
+                } else {
+                    tokens.emplace_back(LEFTPAREN);
+                }
+                break;
+
+            case ')':
+                if (tmp && tmp->type == SYMBOL) {
+                    tokens.push_back(*tmp);
+                    tmp = {};
+                    tokens.emplace_back(RIGHTPAREN);
+                } else if (tmp && tmp->type == STRING) {
+                    tmp->val += c;
+                } else {
+                    tokens.emplace_back(RIGHTPAREN);
+                }
+                break;
+
+            case '\"':
+                if (tmp && tmp->type == STRING) {
+                    tokens.push_back(*tmp);
+                    tmp = {};
+                } else if (tmp && tmp->type == SYMBOL) {
+                    throw std::runtime_error("Character '\"' not allowed in symbol names");
+                } else if (!tmp) {
+                    tmp = Token(STRING);
+                }
+                break;
+
+            default:
+                if (!tmp) {
+                    tmp = Token(SYMBOL, std::string(1, c));
+                } else {
+                    tmp->val += c;
+                }
+                break;
         }
     }
-    if (!tmp.empty()) {
-        tokens.push_back(tmp);
+    if (tmp) {
+        tokens.push_back(*tmp);
     }
     return tokens;
 }
 
-void print_n_spaces(int n) {
-    for (int i = 0; i < n * 2; ++i) {
-        std::cout << " ";
-    }
-}
+//void print_n_spaces(int n) {
+//    for (int i = 0; i < n * 2; ++i) {
+//        std::cout << " ";
+//    }
+//}
+//
+//void print_ast(const Expression &ast, int inc = 0) {
+//    if (auto n = std::get_if<Number>(&ast.value)) {
+//        print_n_spaces(inc);
+//        std::cout << *n << std::endl;
+//    } else if (auto s = std::get_if<Symbol>(&ast.value)) {
+//        print_n_spaces(inc);
+//        std::cout << *s << std::endl;
+//    } else if (auto l = std::get_if<Expression::List>(&ast.value)) {
+//        for (auto e : *l) {
+//            print_ast(e, inc + 1);
+//        }
+//    }
+//}
 
-void print_ast(const Expression &ast, int inc = 0) {
-    if (auto n = std::get_if<Number>(&ast.value)) {
-        print_n_spaces(inc);
-        std::cout << *n << std::endl;
-    } else if (auto s = std::get_if<Symbol>(&ast.value)) {
-        print_n_spaces(inc);
-        std::cout << *s << std::endl;
-    } else if (auto l = std::get_if<Expression::List>(&ast.value)) {
-        for (auto e : *l) {
-            print_ast(e, inc + 1);
-        }
-    }
-}
-
-Expression atom(std::string token) {
+Expression atom(const std::string &token) {
     try {
         return std::stof(token);
     } catch (std::invalid_argument &) {
@@ -68,14 +108,15 @@ Expression atom(std::string token) {
 std::pair<Expression, int> parse(Tokens tokens, int start) {
     int i = start;
     while (i <= tokens.size()) {
-        if (tokens[i] == "(") {
+        auto t = tokens[i];
+        if (t.type == LEFTPAREN) {
             i++;
             if (i >= tokens.size()) {
                 throw IncompleteStatement("Expected expression after '('");
             }
 
             std::vector<Expression> exprs;
-            while (tokens[i] != ")") {
+            while (tokens[i].type != RIGHTPAREN) {
                 if (i == tokens.size()) {
                     throw IncompleteStatement("Expected ')'");
                 }
@@ -87,10 +128,12 @@ std::pair<Expression, int> parse(Tokens tokens, int start) {
                 }
             }
             return {exprs, i + 1};
-        } else if (tokens[i] == ")") {
+        } else if (t.type == RIGHTPAREN) {
             throw std::runtime_error("Unexpected ')'");
+        } else if (t.type == STRING) {
+            return {String{t.val}, i + 1};
         } else {
-            return {atom(tokens[i]), i + 1};
+            return {atom(t.val), i + 1};
         }
     }
 }
@@ -210,6 +253,10 @@ struct PrintVisitor {
 
     std::string operator()(Lambda &) {
         return "lambda";
+    }
+
+    std::string operator()(String &s) {
+        return s.value;
     }
 };
 

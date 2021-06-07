@@ -8,10 +8,25 @@
 
 std::string stdlib();
 
-using Tokens = std::vector<std::string>;
+enum TokenType {
+    LEFTPAREN,
+    RIGHTPAREN,
+    STRING,
+    SYMBOL
+};
 
-Tokens tokenize(const std::string& program);
+struct Token {
+    TokenType type;
+    std::string val;
 
+    explicit Token(TokenType type) : type(type) {}
+
+    Token(TokenType type, std::string value) : type(type), val(value) {}
+};
+
+using Tokens = std::vector<Token>;
+
+Tokens tokenize(const std::string &program);
 
 using Number = double;
 using Symbol = std::string;
@@ -21,9 +36,14 @@ public:
     explicit IncompleteStatement(std::string msg) : std::runtime_error(msg.c_str()) {}
 };
 
+
+struct String {
+    std::string value;
+};
+
 struct Expression {
     using List = std::vector<Expression>;
-    std::variant<Number, Symbol, List> value;
+    std::variant<Number, Symbol, List, String> value;
 
     Expression() {}
 
@@ -32,6 +52,8 @@ struct Expression {
     Expression(Symbol s) : value(std::move(s)) {}
 
     Expression(List l) : value(std::move(l)) {}
+
+    Expression(String s) : value(std::move(s)) {}
 
     Number get_number() {
         return std::get<Number>(value);
@@ -45,6 +67,10 @@ struct Expression {
         return std::get<List>(value);
     }
 
+    String get_string() {
+        return std::get<String>(value);
+    }
+
     bool is_symbol() {
         return std::holds_alternative<Symbol>(value);
     }
@@ -56,23 +82,24 @@ struct Expression {
     bool is_list() {
         return std::holds_alternative<List>(value);
     }
+
+    bool is_string() {
+        return std::holds_alternative<String>(value);
+    }
 };
 
-
 std::pair<Expression, int> parse(Tokens tokens, int start = 0);
+
 
 std::vector<Expression> parse_all(Tokens tokens);
 
 struct Nil {
 };
 
-
 struct Lambda {
     std::vector<Symbol> arguments;
     Expression body;
 };
-
-using String = std::string;
 
 struct List;
 using Result = std::variant<Nil, Number, Lambda, bool, List, String>;
