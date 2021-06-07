@@ -12,7 +12,7 @@ std::string stdlib() {
 }
 
 
-Tokens tokenize(std::string program) {
+Tokens tokenize(const std::string &program) {
     Tokens tokens;
     std::string tmp;
     for (auto c : program) {
@@ -181,17 +181,24 @@ Env merge(Env a, Env b) {
     return a;
 }
 
-std::string to_string(Result res) {
-    if (auto n = std::get_if<Number>(&res)) {
-        return std::to_string(*n);
-    } else if (std::get_if<Nil>(&res)) {
+struct PrintVisitor {
+    std::string operator()(Number &n) {
+        return std::to_string(n);
+    }
+
+    std::string operator()(Nil &) {
         return "nil";
-    } else if (auto s = std::get_if<Symbol>(&res)) {
-        return *s;
-    } else if (auto b = std::get_if<bool>(&res)) {
-        return (*b) ? "true" : "false";
-    } else if (auto l = std::get_if<List>(&res)) {
-        auto list = *l;
+    }
+
+    std::string operator()(Symbol &s) {
+        return s;
+    }
+
+    std::string operator()(bool &b) {
+        return b ? "true" : "false";
+    }
+
+    std::string operator()(List &list) {
         std::string s = "(";
         for (const auto &v : list.list) {
             s += to_string(v) + " ";
@@ -199,9 +206,15 @@ std::string to_string(Result res) {
         s.pop_back();
         s += ")";
         return s;
-    } else if (auto lbd = std::get_if<Lambda>(&res)) {
+    }
+
+    std::string operator()(Lambda &) {
         return "lambda";
     }
+};
+
+std::string to_string(Result res) {
+    return std::visit(PrintVisitor{}, res);
 }
 
 std::set<std::string> builtins = {
@@ -320,9 +333,7 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
         return {*n, env};
 
     } else if (auto s = std::get_if<Symbol>(&expr.value)) {
-        if (builtins.contains(*s)) {
-            return {*s, env};
-        } else if (env.contains(*s)) {
+        if (env.contains(*s)) {
             return {env.at(*s), env};
         } else {
             throw std::runtime_error("Undeclared symbol " + *s);
@@ -334,12 +345,16 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
             return {Nil{}, env};
         }
 
+        // Check if first symbol is builtin
+        if (auto op = std::get_if<Symbol>(&list[0].value)) {
+            if (builtins.contains(*op)) {
+                return eval_builtin(*op, list, env);
+            }
+        }
+
         auto first = eval(list[0], env).first;
 
-        if (auto op = std::get_if<Symbol>(&first)) {
-            return eval_builtin(*op, list, env);
-
-        } else if (auto lambda = std::get_if<Lambda>(&first)) {
+        if (auto lambda = std::get_if<Lambda>(&first)) {
             Env bindings = env;
             for (int i = 1; i < list.size(); ++i) {
                 bindings[lambda->arguments[i - 1]] = eval(list[i], env).first;

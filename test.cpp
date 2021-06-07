@@ -141,4 +141,8 @@ int main() {
     test("cond", "(cond ((= 1 2) 1) ((= 1 1) 2))", [](auto res) {
         assert(std::get<Number>(res) == 2);
     });
+
+//    test("string", "\"hello, world!\"", [](auto res) {
+//        assert(std::get<String>(res) == "hello, world!");
+//    });
 }

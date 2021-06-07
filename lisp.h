@@ -10,20 +10,16 @@ std::string stdlib();
 
 using Tokens = std::vector<std::string>;
 
-Tokens tokenize(std::string program);
+Tokens tokenize(const std::string& program);
 
 
 using Number = double;
 using Symbol = std::string;
 
-struct Nil {
-};
-
 class IncompleteStatement : public std::runtime_error {
 public:
     explicit IncompleteStatement(std::string msg) : std::runtime_error(msg.c_str()) {}
 };
-
 
 struct Expression {
     using List = std::vector<Expression>;
@@ -62,9 +58,13 @@ struct Expression {
     }
 };
 
+
 std::pair<Expression, int> parse(Tokens tokens, int start = 0);
 
 std::vector<Expression> parse_all(Tokens tokens);
+
+struct Nil {
+};
 
 
 struct Lambda {
@@ -72,8 +72,10 @@ struct Lambda {
     Expression body;
 };
 
+using String = std::string;
+
 struct List;
-using Result = std::variant<Nil, Number, Symbol, Lambda, bool, List>;
+using Result = std::variant<Nil, Number, Lambda, bool, List, String>;
 struct List {
     std::vector<Result> list;
 };
