@@ -2,6 +2,7 @@
 #define CPPLISP_LISP_H
 
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <unordered_map>
@@ -19,9 +20,9 @@ struct Token {
     TokenType type;
     std::string val;
 
-    explicit Token(TokenType type) : type(type) {}
+    Token(TokenType type, std::string value) : type(type), val(std::move(value)) {}
 
-    Token(TokenType type, std::string value) : type(type), val(value) {}
+    explicit Token(TokenType type) : Token(type, "") {}
 };
 
 using Tokens = std::vector<Token>;
@@ -89,7 +90,6 @@ struct Expression {
 };
 
 std::pair<Expression, int> parse(Tokens tokens, int start = 0);
-
 
 std::vector<Expression> parse_all(Tokens tokens);
 

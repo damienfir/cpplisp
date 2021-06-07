@@ -256,7 +256,7 @@ struct PrintVisitor {
     }
 
     std::string operator()(String &s) {
-        return s.value;
+        return "\"" + s.value + "\"";
     }
 };
 
@@ -385,6 +385,8 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
         } else {
             throw std::runtime_error("Undeclared symbol " + *s);
         }
+    } else if (auto s = std::get_if<String>(&expr.value)) {
+        return {*s, env};
 
     } else if (auto l = std::get_if<Expression::List>(&expr.value)) {
         auto list = *l;
