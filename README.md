@@ -12,7 +12,7 @@ Needless to say that **cpplisp** is not production ready, but I don't know who w
 ## Features
 
 - if-else statements
-  ```lisp(
+  ```lisp
   (if <cond> <true> <false>)
   ```
 - conditional statements
@@ -20,7 +20,7 @@ Needless to say that **cpplisp** is not production ready, but I don't know who w
   (cond ((<cond> <action>) (<cond> <action>) (else <action>)))
   ```
 - Comments
-  ```
+  ```lisp
   (println "print this")
   ; this is a comment
   (println "print that too")
@@ -48,23 +48,23 @@ Needless to say that **cpplisp** is not production ready, but I don't know who w
   (lambda (x y) (+ x y))
   ```
 - Variable assignments
-  ```
+  ```lisp
   (define x 1)
    ```
 - Comparison operators
-  ```
+  ```lisp
   (if (= 1 2) "equal" "not equal")
   ```
 - `Let` blocks for local scoping
-  ```
+  ```lisp
   (let (x 1 y 2) (+ x y))
   ```
 - `Do` blocks for multi-expression
-  ```
+  ```lisp
   (do (define x 1) (define y 2) (+ x y))
   ```
 - Recursion  
-   ```
+   ```lisp
   (define factorial (lambda (n)
       (if (= n 0)
           1 
