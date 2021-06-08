@@ -1,33 +1,11 @@
-#ifndef CPPLISP_LISP_H
-#define CPPLISP_LISP_H
+#pragma once
 
 #include <string>
-#include <utility>
-#include <variant>
 #include <vector>
-#include <unordered_map>
+#include <stdexcept>
+#include <variant>
 
-std::string stdlib();
-
-enum TokenType {
-    LEFTPAREN,
-    RIGHTPAREN,
-    STRING,
-    SYMBOL
-};
-
-struct Token {
-    TokenType type;
-    std::string val;
-
-    Token(TokenType type, std::string value) : type(type), val(std::move(value)) {}
-
-    explicit Token(TokenType type) : Token(type, "") {}
-};
-
-using Tokens = std::vector<Token>;
-
-Tokens tokenize(const std::string &program);
+#include "tokenizer.h"
 
 using Number = double;
 using Symbol = std::string;
@@ -92,32 +70,3 @@ struct Expression {
 std::pair<Expression, int> parse(Tokens tokens, int start = 0);
 
 std::vector<Expression> parse_all(Tokens tokens);
-
-struct Nil {
-};
-
-struct Lambda {
-    std::vector<Symbol> arguments;
-    Expression body;
-};
-
-struct List;
-using Result = std::variant<Nil, Number, Lambda, bool, List, String>;
-struct List {
-    std::vector<Result> list;
-
-    List() = default;
-    explicit List(std::vector<Result> l): list(std::move(l)) {}
-};
-
-std::string to_string(Result res);
-
-using Env = std::unordered_map<std::string, Result>;
-
-std::pair<Result, Env> eval(Expression expr, Env env);
-
-std::pair<Result, Env> eval_with_env(std::string program, Env env);
-
-Result eval_program(std::string program);
-
-#endif //CPPLISP_LISP_H

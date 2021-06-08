@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include "lisp.h"
+#include "../src/lisp.h"
 
 
 template<typename Fn>

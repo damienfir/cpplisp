@@ -24,91 +24,6 @@ std::string stdlib() {
 //}
 
 
-Tokens tokenize(const std::string &program) {
-    Tokens tokens;
-    std::optional<Token> tmp;
-    bool comment = false;
-
-    for (auto c : program) {
-        if (c == '\n') {
-            if (comment) {
-                comment = false;
-            }
-        } else {
-            if (comment) {
-                continue;
-            }
-        }
-
-        if (c == ';') {
-            if (!tmp) {
-                comment = true;
-                continue;
-            }
-        }
-
-        switch (c) {
-            case ' ':
-            case '\n':
-                if (tmp && tmp->type == STRING) {
-                    tmp->val += c;
-                } else if (tmp) {
-                    tokens.push_back(*tmp);
-                    tmp = {};
-                }
-                break;
-
-            case '(':
-                if (tmp && tmp->type == STRING) {
-                    tmp->val += c;
-                } else if (tmp && tmp->type == SYMBOL) {
-                    tokens.push_back(*tmp);
-                    tmp = {};
-                    tokens.emplace_back(LEFTPAREN);
-                } else {
-                    tokens.emplace_back(LEFTPAREN);
-                }
-                break;
-
-            case ')':
-                if (tmp && tmp->type == SYMBOL) {
-                    tokens.push_back(*tmp);
-                    tmp = {};
-                    tokens.emplace_back(RIGHTPAREN);
-                } else if (tmp && tmp->type == STRING) {
-                    tmp->val += c;
-                } else {
-                    tokens.emplace_back(RIGHTPAREN);
-                }
-                break;
-
-            case '\"':
-                if (tmp && tmp->type == STRING) {
-                    tokens.push_back(*tmp);
-                    tmp = {};
-                } else if (tmp && tmp->type == SYMBOL) {
-                    throw std::runtime_error("Character '\"' not allowed in symbol names");
-                } else if (!tmp) {
-                    tmp = Token(STRING);
-                }
-                break;
-
-            default:
-                if (!tmp) {
-                    tmp = Token(SYMBOL, std::string(1, c));
-                } else {
-                    tmp->val += c;
-                }
-
-                break;
-        }
-    }
-    if (tmp) {
-        tokens.push_back(*tmp);
-    }
-    return tokens;
-}
-
 //void print_n_spaces(int n) {
 //    for (int i = 0; i < n * 2; ++i) {
 //        std::cout << " ";
@@ -128,58 +43,6 @@ Tokens tokenize(const std::string &program) {
 //        }
 //    }
 //}
-
-Expression atom(const std::string &token) {
-    try {
-        return std::stof(token);
-    } catch (std::invalid_argument &) {
-        return token;
-    }
-}
-
-std::pair<Expression, int> parse(Tokens tokens, int start) {
-    int i = start;
-    while (i <= tokens.size()) {
-        auto t = tokens[i];
-        if (t.type == LEFTPAREN) {
-            i++;
-            if (i >= tokens.size()) {
-                throw IncompleteStatement("Expected expression after '('");
-            }
-
-            std::vector<Expression> exprs;
-            while (tokens[i].type != RIGHTPAREN) {
-                if (i == tokens.size()) {
-                    throw IncompleteStatement("Expected ')'");
-                }
-                Expression expr;
-                std::tie(expr, i) = parse(tokens, i);
-                exprs.push_back(expr);
-                if (i >= tokens.size()) {
-                    throw IncompleteStatement("Expected ')'");
-                }
-            }
-            return {exprs, i + 1};
-        } else if (t.type == RIGHTPAREN) {
-            throw std::runtime_error("Unexpected ')'");
-        } else if (t.type == STRING) {
-            return {String{t.val}, i + 1};
-        } else {
-            return {atom(t.val), i + 1};
-        }
-    }
-}
-
-std::vector<Expression> parse_all(Tokens tokens) {
-    std::vector<Expression> exprs;
-    int i = 0;
-    while (i < tokens.size()) {
-        Expression expr;
-        std::tie(expr, i) = parse(tokens, i);
-        exprs.push_back(expr);
-    }
-    return exprs;
-}
 
 Number plus_fn(const std::vector<Result> &arguments) {
     Number n = 0;
@@ -386,7 +249,7 @@ std::set<std::string> builtins = {
         ">", "<=", ">=", "cons", "length"
 };
 
-std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
+std::pair<Result, Env> eval_builtin(const Symbol& op, Expression::List list, Env env) {
     if (op == "let") {
         auto new_env = make_env(list[1].get_list(), env);
         return {eval(list[2], merge(env, new_env)).first, env};
@@ -534,7 +397,3 @@ Result eval_program(std::string program) {
     auto env = eval_with_env(stdlib(), Env{}).second;
     return eval_with_env(program, env).first;
 }
-
-/*
- * standard library
- */
