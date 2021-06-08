@@ -8,8 +8,21 @@
 
 std::string stdlib() {
     return R"stdlib(
+(define empty? (lambda (seq)
+  (= (length seq) 0)))
+
+(define map (lambda (fn seq)
+  (if (empty? seq)
+      (list)
+      (cons (fn (first seq)) (rest seq)))))
 )stdlib";
 }
+
+//std::string stdlib() {
+//    return R"stdlib(
+//)stdlib";
+//}
+
 
 Tokens tokenize(const std::string &program) {
     Tokens tokens;
@@ -200,14 +213,81 @@ Number multiply_fn(const std::vector<Result> &arguments) {
     return n;
 }
 
-bool equals_fn(const std::vector<Result> &arguments) {
+void check_one_args(const std::vector<Result> &arguments) {
+    if (arguments.size() != 1) {
+        throw std::runtime_error("'=' operator requires exactly 1 argument");
+    }
+}
+
+void check_two_args(const std::vector<Result> &arguments) {
     if (arguments.size() != 2) {
         throw std::runtime_error("'=' operator requires exactly 2 arguments");
     }
+}
 
+bool equals_fn(const std::vector<Result> &arguments) {
+    check_two_args(arguments);
     return std::get<Number>(arguments[0]) == std::get<Number>(arguments[1]);
 }
 
+bool less_than_fn(const std::vector<Result> &arguments) {
+    check_two_args(arguments);
+    return std::get<Number>(arguments[0]) < std::get<Number>(arguments[1]);
+}
+
+bool greater_than_fn(const std::vector<Result> &arguments) {
+    check_two_args(arguments);
+    return std::get<Number>(arguments[0]) > std::get<Number>(arguments[1]);
+}
+
+bool less_than_equals_fn(const std::vector<Result> &arguments) {
+    return less_than_fn(arguments) || equals_fn(arguments);
+}
+
+bool greater_than_equals_fn(const std::vector<Result> &arguments) {
+    return greater_than_fn(arguments) || equals_fn(arguments);
+}
+
+Number length_fn(const std::vector<Result> &arguments) {
+    check_one_args(arguments);
+    if (auto seq = std::get_if<List>(&arguments[0])) {
+        return seq->list.size();
+    } else {
+        throw std::runtime_error("Can only get length of list");
+    }
+}
+
+List cons_fn(std::vector<Result> arguments) {
+    check_two_args(arguments);
+
+    if (auto seq = std::get_if<List>(&arguments[1])) {
+        seq->list.insert(seq->list.begin(), arguments[0]);
+        return *seq;
+    } else {
+        throw std::runtime_error("Can only cons to list");
+    }
+}
+
+List list_fn(std::vector<Result> arguments) {
+    return List(std::move(arguments));
+}
+
+Result first_fn(const std::vector<Result> &arguments) {
+    if (auto seq = std::get_if<List>(&arguments[0])) {
+        return seq->list[0];
+    } else {
+        throw std::runtime_error("Can only get first item from list");
+    }
+}
+
+List rest_fn(std::vector<Result> arguments) {
+    if (auto seq = std::get_if<List>(&arguments[0])) {
+        seq->list.erase(seq->list.begin());
+        return *seq;
+    } else {
+        throw std::runtime_error("Can only get the rest of a list");
+    }
+}
 
 Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     if (op == "+") {
@@ -220,6 +300,24 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
         return multiply_fn(arguments);
     } else if (op == "=") {
         return equals_fn(arguments);
+    } else if (op == ">") {
+        return greater_than_fn(arguments);
+    } else if (op == "<") {
+        return less_than_fn(arguments);
+    } else if (op == "<=") {
+        return less_than_equals_fn(arguments);
+    } else if (op == ">=") {
+        return greater_than_equals_fn(arguments);
+    } else if (op == "length") {
+        return length_fn(arguments);
+    } else if (op == "cons") {
+        return cons_fn(arguments);
+    } else if (op == "list") {
+        return list_fn(arguments);
+    } else if (op == "first") {
+        return first_fn(arguments);
+    } else if (op == "rest") {
+        return rest_fn(arguments);
     } else {
         throw std::runtime_error("Unknown operation: " + op);
     }
@@ -263,7 +361,9 @@ struct PrintVisitor {
         for (const auto &v : list.list) {
             s += to_string(v) + " ";
         }
-        s.pop_back();
+        if (s.size() > 1) {
+            s.pop_back();
+        }
         s += ")";
         return s;
     }
@@ -282,7 +382,8 @@ std::string to_string(Result res) {
 }
 
 std::set<std::string> builtins = {
-        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "=", "list", "first", "rest", "cond", "if"
+        "+", "-", "/", "*", "let", "println", "do", "define", "lambda", "=", "list", "first", "rest", "cond", "if", "<",
+        ">", "<=", ">=", "cons", "length"
 };
 
 std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
@@ -358,30 +459,6 @@ std::pair<Result, Env> eval_builtin(Symbol op, Expression::List list, Env env) {
 
         // No clause was evaluated
         return {Nil{}, env};
-
-    } else if (op == "list") {
-        List res;
-        for (int i = 1; i < list.size(); ++i) {
-            res.list.push_back(eval(list[i], env).first);
-        }
-        return {res, env};
-
-    } else if (op == "first") {
-        auto runtime_list = eval(list[1], env).first;
-        auto first = std::get<List>(runtime_list).list[0];
-        return {first, env};
-
-    } else if (op == "rest") {
-        auto res = eval(list[1], env).first;
-        auto all_list = std::get<List>(res);
-
-        if (all_list.list.size() < 2) {
-            return {Nil{}, env};
-        }
-
-        List rest;
-        for (int i = 1; i < all_list.list.size(); ++i) rest.list.push_back(all_list.list[i]);
-        return {rest, env};
 
     } else {
         std::vector<Result> arguments;

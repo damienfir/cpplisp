@@ -107,6 +107,19 @@ int main() {
         assert(std::holds_alternative<Nil>(res));
     });
 
+    test("lt", "(< 1 2)", [](auto res) {
+        assert(std::get<bool>(res));
+    });
+    test("gt", "(> 3 2)", [](auto res) {
+        assert(std::get<bool>(res));
+    });
+    test("gte", "(>= 2 2)", [](auto res) {
+        assert(std::get<bool>(res));
+    });
+    test("lte", "(<= 2 2)", [](auto res) {
+        assert(std::get<bool>(res));
+    });
+
     test("list", "(list 1 2 3)", [](auto res) {
         auto l = std::get<List>(res).list;
         assert(std::get<Number>(l[0]) == 1);
@@ -164,4 +177,23 @@ int main() {
          [](auto res) {
              assert(std::holds_alternative<Nil>(res));
          });
+
+    test("cons", "(cons 1 (list 2 3))", [](auto res) {
+        auto list = std::get<List>(res).list;
+        assert(std::get<Number>(list[0]) == 1);
+        assert(std::get<Number>(list[1]) == 2);
+        assert(std::get<Number>(list[2]) == 3);
+    });
+
+    test("cons empty", "(cons 1 (list))", [](auto res) {
+        auto list = std::get<List>(res).list;
+        assert(list.size() == 1);
+        assert(std::get<Number>(list[0]) == 1);
+    });
+
+    test("length 0", "(length (list))", [](auto res) { assert(std::get<Number>(res) == 0); });
+    test("length", "(length (list 1 2))", [](auto res) { assert(std::get<Number>(res) == 2); });
+
+    test("stdlib: empty?", "(empty? (list))", [](auto res) { assert(std::get<bool>(res)); });
+    test("stdlib: empty? 2", "(empty? (list 1 2))", [](auto res) { assert(std::get<bool>(res) == false); });
 }
