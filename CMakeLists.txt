@@ -3,10 +3,9 @@ project(cpplisp)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(liblisp src/lisp.cpp src/tokenizer.cpp src/parser.cpp)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-add_executable(cpplisp src/repl.cpp)
-target_link_libraries(cpplisp liblisp)
+include_directories(third_party)
 
-add_executable(test test/test.cpp)
-target_link_libraries(test liblisp)
+add_subdirectory(src)
+add_subdirectory(tests)
