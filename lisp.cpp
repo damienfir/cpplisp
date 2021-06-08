@@ -14,7 +14,7 @@ std::string stdlib() {
 (define map (lambda (fn seq)
   (if (empty? seq)
       (list)
-      (cons (fn (first seq)) (rest seq)))))
+      (cons (fn (first seq)) (map fn (rest seq))))))
 )stdlib";
 }
 

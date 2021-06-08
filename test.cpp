@@ -196,4 +196,11 @@ int main() {
 
     test("stdlib: empty?", "(empty? (list))", [](auto res) { assert(std::get<bool>(res)); });
     test("stdlib: empty? 2", "(empty? (list 1 2))", [](auto res) { assert(std::get<bool>(res) == false); });
+
+    test("map", "(map (lambda (x) (+ x 1)) (list 1 2 3))", [](auto res) {
+        auto l = std::get<List>(res).list;
+        assert(std::get<Number>(l[0]) == 2);
+        assert(std::get<Number>(l[1]) == 3);
+        assert(std::get<Number>(l[2]) == 4);
+    });
 }
