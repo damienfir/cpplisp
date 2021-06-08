@@ -225,8 +225,6 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     }
 }
 
-std::pair<Result, Env> eval(Expression expr, Env env);
-
 Env make_env(Expression::List vars, Env env) {
     Env new_env;
     for (int i = 0; i < vars.size(); i += 2) {
@@ -455,6 +453,5 @@ Result eval_program(std::string program) {
 }
 
 /*
- * comments
  * standard library
  */

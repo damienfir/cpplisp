@@ -111,6 +111,8 @@ std::string to_string(Result res);
 
 using Env = std::unordered_map<std::string, Result>;
 
+std::pair<Result, Env> eval(Expression expr, Env env);
+
 std::pair<Result, Env> eval_with_env(std::string program, Env env);
 
 Result eval_program(std::string program);
