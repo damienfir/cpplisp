@@ -498,6 +498,12 @@ std::pair<Result, Env> eval(Expression expr, Env env) {
         auto first = eval(list[0], env).first;
 
         if (auto lambda = std::get_if<Lambda>(&first)) {
+            if (lambda->arguments.size() != list.size() - 1) {
+                throw std::runtime_error(
+                        "Lambda accepts " + std::to_string(lambda->arguments.size()) + " arguments, but " +
+                        std::to_string(list.size() - 1) + " were provided");
+            }
+
             Env bindings = env;
             for (int i = 1; i < list.size(); ++i) {
                 bindings[lambda->arguments[i - 1]] = eval(list[i], env).first;
