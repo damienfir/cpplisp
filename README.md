@@ -7,7 +7,7 @@ A small Lisp dialect interpreter written in C++
 I believe that all programmers should know how a programming language is implemented, so I'm doing that with Lisp. This
 is just an interpreter, although I might implement a VM or compiled version at some point.
 
-Needless to say that **cpplisp** is not production ready, but I don't know who would even try that.
+Needless to say that **cpplisp** is not production ready.
 
 ## Features
 
