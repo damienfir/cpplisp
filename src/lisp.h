@@ -8,30 +8,9 @@
 
 #include "tokenizer.h"
 #include "parser.h"
+#include "types.h"
 
 std::string stdlib();
-
-
-struct Nil {
-};
-
-struct Lambda {
-    std::vector<Symbol> arguments;
-    Expression body;
-};
-
-struct List;
-using Result = std::variant<Nil, Number, Lambda, bool, List, String>;
-
-struct List {
-    std::vector<Result> list;
-
-    List() = default;
-
-    explicit List(std::vector<Result> l) : list(std::move(l)) {}
-};
-
-std::string to_string(Result res);
 
 using Env = std::unordered_map<std::string, Result>;
 
