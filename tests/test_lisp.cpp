@@ -13,8 +13,15 @@ TEST_CASE("Nested arithmetic") {
 }
 
 TEST_CASE("Let") {
-  auto res = eval_program("(let (x 1 y 2) (+ x (* 1 y)))");
-  REQUIRE(std::get<Number>(res) == 3);
+  SECTION("base case") {
+    auto res = eval_program("(let (x 1 y 2) (+ x (* 1 y)))");
+    REQUIRE(std::get<Number>(res) == 3);
+  }
+
+  SECTION("second var depend on first var") {
+    auto res = eval_program("(let (x 1 y (+ x 1)) (+ x (* 1 y)))");
+    REQUIRE(std::get<Number>(res) == 3);
+  }
 }
 
 TEST_CASE("println") {
@@ -29,8 +36,15 @@ TEST_CASE("do/define") {
 }
 
 TEST_CASE("lambda") {
-  auto res = eval_program("((lambda (x) (+ x 1)) 1)");
-  REQUIRE(std::get<Number>(res) == 2);
+  SECTION("basic") {
+    auto res = eval_program("((lambda (x) (+ x 1)) 1)");
+    REQUIRE(std::get<Number>(res) == 2);
+  }
+
+  SECTION("no arguments") {
+    auto res = eval_program("((lambda () (+ 1 1)))");
+    REQUIRE(std::get<Number>(res) == 2);
+  }
 }
 
 TEST_CASE("if") {
@@ -265,4 +279,27 @@ TEST_CASE("map", "[stdlib]") {
   REQUIRE(std::get<Number>(l[0]) == 2);
   REQUIRE(std::get<Number>(l[1]) == 3);
   REQUIRE(std::get<Number>(l[2]) == 4);
+}
+
+TEST_CASE("closures") {
+  SECTION("from global scope") {
+    auto res = eval_program("(define x 1) (define fn (lambda (y) (+ x y))) (fn 2)");
+    REQUIRE(std::get<Number>(res) == 3);
+  }
+
+  SECTION("from local scope") {
+    auto res = eval_program("(define fn (let (x 1) (lambda (y) (+ x y)))) (fn 2)");
+    REQUIRE(std::get<Number>(res) == 3);
+  }
+}
+
+TEST_CASE("scopes") {
+  SECTION("nested") {
+    auto res = eval_program("(let (x 1) (let (y 2) (+ x y)))");
+    REQUIRE(std::get<Number>(res) == 3);
+  }
+
+  SECTION("separate") {
+    REQUIRE_THROWS(eval_program("(let (x 1) x) (let (y 2) (+ x y))"));
+  }
 }

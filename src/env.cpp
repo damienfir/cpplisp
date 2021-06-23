@@ -10,8 +10,8 @@
 //  return new_env;
 //}
 
-//Env merge(Env a, Env b) {
-//  // modifies both a and b but it's ok because we get copies as arguments
-//  a.merge(b);
-//  return a;
-//}
+Env merge(Env a, Env b) {
+  // modifies both a and b but it's ok because we get copies as arguments
+  a.merge(b);
+  return a;
+}

@@ -7,7 +7,7 @@
 
 class SyntaxError : public std::runtime_error {
 public:
-  explicit SyntaxError(const std::string& msg)
+  explicit SyntaxError(const std::string &msg)
       : std::runtime_error(msg.c_str()) {}
 };
 
@@ -27,9 +27,11 @@ struct List;
 struct Lambda;
 using Result = std::variant<Nil, Number, Lambda, Boolean, List, String, Symbol>;
 
+class Env;
 struct Lambda {
   std::vector<Symbol> arguments;
   std::shared_ptr<Expr> body;
+  std::shared_ptr<Env> env;
 };
 
 struct List {

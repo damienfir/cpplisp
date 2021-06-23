@@ -17,12 +17,14 @@ Result apply_lambda(const Lambda &lambda, Env &env,
   for (int i = 0; i < args.size(); ++i) {
     bindings[lambda.arguments[i].name] = args[i];
   }
+
+  bindings.merge(*lambda.env);
   return lambda.body->evaluate(bindings);
 }
 
 Result SymbolExpr::evaluate(Env &env) {
-  if (env.contains(symbol.name)) {
-    return env.at(symbol.name);
+  if (auto val = env.get(symbol.name)) {
+    return *val;
   } else {
     throw std::runtime_error("Undeclared symbol " + symbol.name);
   }
@@ -35,13 +37,12 @@ Result ListExpr::evaluate(Env &env) {
 
   auto expr = dynamic_cast<SymbolExpr *>(expressions[0].get());
   if (expr != nullptr) {
-    if (env.contains(expr->symbol.name)) {
-      auto func = env.at(expr->symbol.name);
-      if (auto lambda = std::get_if<Lambda>(&func)) {
+    if (auto func = env.get(expr->symbol.name)) {
+      if (auto lambda = std::get_if<Lambda>(func)) {
         return apply_lambda(*lambda, env, eval_all(env, rest(expressions)));
       } else {
         throw std::runtime_error("Cannot apply, not a function: " +
-                                 to_string(func));
+                                 to_string(*func));
       }
     } else {
       return apply_op(expr->symbol.name, eval_all(env, rest(expressions)));
@@ -105,7 +106,9 @@ Result DefineExpr::evaluate(Env &env) {
 Result LetExpr::evaluate(Env &env) {
   Env new_env = env;
   for (const auto &pair : vars) {
-    new_env[pair.first.name] = pair.second->evaluate(env);
+    // passing new_env to evaluate() make the previous bindings available to
+    // further declarations, e.g.: (let (x 1 y (+ x 2)) y) -> 3
+    new_env[pair.first.name] = pair.second->evaluate(new_env);
   }
 
   return expr->evaluate(new_env);
@@ -120,7 +123,11 @@ Result LambdaExpr::evaluate(Env &env) {
     }
     args.push_back(symbol->symbol);
   }
-  return Lambda{args, body};
+
+  // copy env to pointer
+  auto closure_env = std::make_shared<Env>();
+  *closure_env = env;
+  return Lambda{args, body, closure_env};
 }
 
 Result AndExpr::evaluate(Env &env) {

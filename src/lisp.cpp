@@ -43,6 +43,5 @@ Result eval_program_with_stdlib(const std::string &program) {
 }
 
 /*
- * nested environments
- * closures
+ * compiler/VM
  */
