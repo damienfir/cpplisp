@@ -51,10 +51,8 @@ Needless to say that **cpplisp** is not production ready.
   ```lisp
   (define x 1)
    ```
-- Comparison operators
-  ```lisp
-  (if (= 1 2) "equal" "not equal")
-  ```
+- Comparison operators (`=`, `<`, `<=`, `>`, `>=`)
+- Logical operators (`and`, `or`, `not`)
 - `Let` blocks for local scoping
   ```lisp
   (let (x 1 y 2) (+ x y))
@@ -71,6 +69,10 @@ Needless to say that **cpplisp** is not production ready.
           (* n (factorial (- n 1))))))
   (factorial 10) ; -> 3628800
   ```
+  
+- Standard library with  
+  - map
+  - empty?
 
 ## How to build and run
 

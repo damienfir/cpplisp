@@ -158,6 +158,23 @@ TEST_CASE("or") {
   }
 }
 
+TEST_CASE("not") {
+  SECTION("false") {
+    auto res = eval_program("(not true)");
+    REQUIRE(!std::get<bool>(res));
+  }
+
+  SECTION("true") {
+    auto res = eval_program("(not false)");
+    REQUIRE(std::get<bool>(res));
+  }
+
+  SECTION("other type") {
+    auto res = eval_program("(not 0)");
+    REQUIRE(std::get<bool>(res));
+  }
+}
+
 TEST_CASE("list") {
   SECTION("init") {
     auto res = eval_program("(list 1 2 3)");
@@ -283,12 +300,20 @@ TEST_CASE("map", "[stdlib]") {
 
 TEST_CASE("closures") {
   SECTION("from global scope") {
-    auto res = eval_program("(define x 1) (define fn (lambda (y) (+ x y))) (fn 2)");
+    auto res =
+        eval_program("(define x 1) (define fn (lambda (y) (+ x y))) (fn 2)");
     REQUIRE(std::get<Number>(res) == 3);
   }
 
   SECTION("from local scope") {
-    auto res = eval_program("(define fn (let (x 1) (lambda (y) (+ x y)))) (fn 2)");
+    auto res =
+        eval_program("(define fn (let (x 1) (lambda (y) (+ x y)))) (fn 2)");
+    REQUIRE(std::get<Number>(res) == 3);
+  }
+
+  SECTION("shadowing") {
+    auto res =
+        eval_program("(define fn (let (y 1) (lambda (y) (+ 1 y)))) (fn 2)");
     REQUIRE(std::get<Number>(res) == 3);
   }
 }
@@ -301,5 +326,17 @@ TEST_CASE("scopes") {
 
   SECTION("separate") {
     REQUIRE_THROWS(eval_program("(let (x 1) x) (let (y 2) (+ x y))"));
+  }
+}
+
+TEST_CASE("booleans") {
+  SECTION("true") {
+    auto res = eval_program("true");
+    REQUIRE(std::get<bool>(res));
+  }
+
+  SECTION("false") {
+    auto res = eval_program("false");
+    REQUIRE(!std::get<bool>(res));
   }
 }

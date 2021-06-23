@@ -8,7 +8,10 @@
 
 class Env {
 public:
-  Env() = default;
+  Env() {
+      bindings["true"] = true;
+      bindings["false"] = false;
+  };
 
   Result* get(std::string key) {
     if (bindings.contains(key)) {

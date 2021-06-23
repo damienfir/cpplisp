@@ -18,6 +18,8 @@ Result apply_lambda(const Lambda &lambda, Env &env,
     bindings[lambda.arguments[i].name] = args[i];
   }
 
+  // in this order, the bindings from parameters are not replaced by the
+  // lambda.env values in case they match
   bindings.merge(*lambda.env);
   return lambda.body->evaluate(bindings);
 }

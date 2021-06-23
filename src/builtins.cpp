@@ -121,6 +121,14 @@ Nil println_fn(const std::vector<Result> &arguments) {
   return Nil{};
 }
 
+bool not_fn(const std::vector<Result> &arguments) {
+  if (arguments.size() != 1) {
+    throw std::runtime_error("Expected one argument to 'not");
+  }
+
+  return !is_true(arguments[0]);
+}
+
 Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
   if (op == "+") {
     return plus_fn(arguments);
@@ -152,6 +160,8 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     return rest_fn(arguments);
   } else if (op == "println") {
     return println_fn(arguments);
+  } else if (op == "not") {
+    return not_fn(arguments);
   } else {
     throw std::runtime_error("Unknown operation: " + op);
   }
