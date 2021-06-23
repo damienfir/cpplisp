@@ -31,10 +31,6 @@ Needless to say that **cpplisp** is not production ready.
   (first (list 1 2 3)) ; -> 1
   (rest (list (1 2 3)) ; -> (list 2 3)
   ```
-- Arithmetic
-  ```lisp
-  (+ 1 2 (/ 3 4) (- 6 3) (* 3 4 2))
-  ```
 - Print statement
   ```lisp
   (println 1)
@@ -51,6 +47,7 @@ Needless to say that **cpplisp** is not production ready.
   ```lisp
   (define x 1)
    ```
+- Arithmetic (`+`, `-`, `/`, `*`)
 - Comparison operators (`=`, `<`, `<=`, `>`, `>=`)
 - Logical operators (`and`, `or`, `not`)
 - `Let` blocks for local scoping
