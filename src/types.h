@@ -1,23 +1,43 @@
 #pragma once
-#include "parser.h"
 
-struct Nil {
+#include <memory>
+#include <string>
+#include <variant>
+#include <vector>
+
+class SyntaxError : public std::runtime_error {
+public:
+  explicit SyntaxError(const std::string& msg)
+      : std::runtime_error(msg.c_str()) {}
 };
 
-struct Lambda {
-    std::vector<Symbol> arguments;
-    Expression body;
+class Expr;
+
+struct Symbol {
+  std::string name;
 };
+
+struct Nil {};
+
+using Boolean = bool;
+using String = std::string;
+using Number = double;
 
 struct List;
-using Result = std::variant<Nil, Number, Lambda, bool, List, String>;
+struct Lambda;
+using Result = std::variant<Nil, Number, Lambda, Boolean, List, String, Symbol>;
+
+struct Lambda {
+  std::vector<Symbol> arguments;
+  std::shared_ptr<Expr> body;
+};
 
 struct List {
-    std::vector<Result> list;
+  std::vector<Result> list;
 
-    List() = default;
+  List() = default;
 
-    explicit List(std::vector<Result> l) : list(std::move(l)) {}
+  explicit List(std::vector<Result> l) : list(std::move(l)) {}
 };
 
 std::string to_string(Result res);

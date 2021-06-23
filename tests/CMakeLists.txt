@@ -1,5 +1,5 @@
 
-add_executable(tests tests.cpp test_lisp.cpp test_tokenizer.cpp)
+add_executable(tests tests.cpp test_lisp.cpp test_tokenizer.cpp test_parser.cpp)
 target_include_directories(tests PRIVATE ../third_party)
 target_link_libraries(tests liblisp)
 

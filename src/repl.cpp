@@ -18,7 +18,8 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    auto env = eval_with_env(stdlib(), Env{}).second;
+    Env env;
+    eval_with_env(stdlib(), env);
 
     std::string program;
     while (true) {
@@ -35,9 +36,8 @@ int main(int argc, char **argv) {
             return 0;
         }
 
-        Result res;
         try {
-            std::tie(res, env) = eval_with_env(program, env);
+            auto res = eval_with_env(program, env);
             std::cout << to_string(res) << std::endl;
             program = "";
         } catch (IncompleteStatement &) {
