@@ -14,7 +14,8 @@ int main(int argc, char **argv) {
         }
         std::stringstream buffer;
         buffer << file.rdbuf();
-        eval_program(buffer.str());
+        auto output = eval_program_with_stdlib(buffer.str());
+        std::cout << to_string(output) << std::endl;
         return 0;
     }
 

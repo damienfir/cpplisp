@@ -89,6 +89,46 @@ List cons_fn(std::vector<Result> arguments) {
   }
 }
 
+List append_fn(std::vector<Result> arguments) {
+  check_two_args(arguments);
+
+  if (auto seq = std::get_if<List>(&arguments[1])) {
+    seq->list.push_back(arguments[0]);
+    return *seq;
+  } else {
+    throw std::runtime_error("Can only append to list");
+  }
+}
+
+List concat_fn(const std::vector<Result> &arguments) {
+  List list;
+  for (auto arg : arguments) {
+    if (auto l = std::get_if<List>(&arg)) {
+      std::copy(l->list.begin(), l->list.end(), std::back_inserter(list.list));
+    } else {
+      throw std::runtime_error("Can only concat lists");
+    }
+  }
+  return list;
+}
+
+Result get_fn(const std::vector<Result> &arguments) {
+  if (auto seq = std::get_if<List>(&arguments[0])) {
+    if (auto indice = std::get_if<Number>(&arguments[1])) {
+      int i = (int)*indice;
+      if (i <= seq->list.size()) {
+        return seq->list[i];
+      } else {
+        throw std::runtime_error("Indice " + std::to_string(i) + " too high");
+      }
+    } else {
+      throw std::runtime_error("'get' requires a number as indice");
+    }
+  } else {
+    throw std::runtime_error("'get' requires a list");
+  }
+}
+
 List list_fn(std::vector<Result> arguments) {
   return List(std::move(arguments));
 }
@@ -152,6 +192,12 @@ Result apply_op(const std::string &op, const std::vector<Result> &arguments) {
     return length_fn(arguments);
   } else if (op == "cons") {
     return cons_fn(arguments);
+  } else if (op == "append") {
+    return append_fn(arguments);
+  } else if (op == "concat") {
+    return concat_fn(arguments);
+  } else if (op == "get") {
+    return get_fn(arguments);
   } else if (op == "list") {
     return list_fn(arguments);
   } else if (op == "first") {
